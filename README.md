@@ -10,39 +10,24 @@ caller ──(X-Api-Key)──► Caddy :8080
 
 ## Prerequisites
 
-- Docker & Docker Compose
-- `curl` (to install dotenvx)
+- Docker & Docker Compose, `curl` (to install dotenvx) - we recommend to open this repo in preconfigured Codespace/Devcontainer to cover dependencies
 - A [Check Point Smart-1 Cloud tenant](https://portal.checkpoint.com/dashboard/security-management) with an API key - we are suggesting demo tenant for experiments ()
 
 ## First-time setup
 
-### 1. Install dotenvx
-
 ```bash
-curl -sfS https://dotenvx.sh | sh
-```
-
-### 2. Run the setup script
-
-```bash
-chmod +x setup.sh start.sh
 ./setup.sh
 ```
 
-The script will:
-1. Copy `.env.example` → `.env` on the first run.
-2. Ask you to fill in the required variables, then re-run.
-3. Encrypt `.env` with dotenvx on the second run.
+The script interactively prompts for the three required values, writes them with `dotenvx set`, and encrypts `.env`:
 
-### 3. Fill in `.env`
+| Prompt | Variable | Description |
+|---|---|---|
+| S1C API key | `API_KEY` | Your S1C API key |
+| S1C tenant web-API URL | `S1C_URL` | Your S1C tenant URL ending in `/web_api/` |
+| Proxy API key | `PROXY_API_KEY` | Secret callers must supply as `X-Api-Key` header |
 
-| Variable | Description |
-|---|---|
-| `API_KEY` | Your S1C API key |
-| `S1C_URL` | Your S1C tenant web-API URL (ending in `/web_api/`) |
-| `PROXY_API_KEY` | Secret that callers must supply as `X-Api-Key` header |
-
-After editing `.env`, re-run `./setup.sh` to encrypt it.
+Re-running `./setup.sh` lets you update individual values — existing ones are shown and kept if you press Enter.
 
 > **Security note:** `./setup.sh` produces a `.env.keys` file containing the decryption key.  
 > Both `.env` and `.env.keys` are git-ignored. Back up `.env.keys` securely — without it the encrypted `.env` cannot be decrypted.

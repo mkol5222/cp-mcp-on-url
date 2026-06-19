@@ -2,49 +2,72 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# setup.sh — first-time setup: install dotenvx, create and encrypt .env
+# setup.sh — first-time setup: install dotenvx, populate and encrypt .env
 # ---------------------------------------------------------------------------
 
 # 1. Install dotenvx if not already present
 if ! command -v dotenvx &>/dev/null; then
   echo "Installing dotenvx..."
   curl -sfS https://dotenvx.sh | sh
-  # Ensure the installed binary is on PATH for the rest of this script
   export PATH="$HOME/.dotenvx/bin:$PATH"
 fi
 
 echo "dotenvx $(dotenvx --version)"
+echo ""
 
-# 2. Create .env from example if it does not exist yet
-if [ ! -f .env ]; then
-  cp .env.example .env
-  echo ""
-  echo "Created .env from .env.example."
-  echo "Edit .env and fill in API_KEY, S1C_URL, and PROXY_API_KEY, then re-run this script."
-  exit 0
-fi
+# 2. Prompt helper — re-asks until a non-empty value is given.
+#    Usage: prompt_var VAR_NAME "Display label" [secret]
+prompt_var() {
+  local var="$1"
+  local label="$2"
+  local secret="${3:-}"
+  local value=""
 
-# 3. Verify the required variables have been filled in
-missing=()
-for var in API_KEY S1C_URL PROXY_API_KEY; do
-  value=$(grep -E "^${var}=" .env | cut -d= -f2-)
-  if [ -z "$value" ] || [[ "$value" == *"your_"* ]] || [[ "$value" == "change-me" ]]; then
-    missing+=("$var")
+  # If already set in .env and not a placeholder, offer to keep it
+  if [ -f .env ]; then
+    existing=$(dotenvx get "$var" 2>/dev/null || true)
+    if [ -n "$existing" ] && [[ "$existing" != *"your_"* ]] && [[ "$existing" != "change-me" ]]; then
+      if [ -n "$secret" ]; then
+        echo "$label [current: ****]: "
+      else
+        echo "$label [current: $existing]: "
+      fi
+      read -r value
+      if [ -z "$value" ]; then
+        return  # keep existing
+      fi
+      dotenvx set "$var" "$value" >/dev/null
+      return
+    fi
   fi
-done
 
-if [ ${#missing[@]} -gt 0 ]; then
-  echo ""
-  echo "ERROR: The following variables in .env still have placeholder values:"
-  for v in "${missing[@]}"; do echo "  - $v"; done
-  echo ""
-  echo "Edit .env, set real values, then re-run setup.sh."
-  exit 1
-fi
+  while [ -z "$value" ]; do
+    if [ -n "$secret" ]; then
+      read -rsp "$label: " value
+      echo
+    else
+      read -rp "$label: " value
+    fi
+    if [ -z "$value" ]; then
+      echo "  Value cannot be empty, please try again."
+    fi
+  done
+
+  dotenvx set "$var" "$value" >/dev/null
+}
+
+# 3. Interactively populate all required variables
+echo "Configure your Check Point MCP proxy"
+echo "-------------------------------------"
+echo ""
+
+prompt_var API_KEY      "S1C API key" secret
+prompt_var S1C_URL      "S1C tenant web-API URL (ending in /web_api/)"
+prompt_var PROXY_API_KEY "Proxy API key (X-Api-Key callers must supply)" secret
 
 # 4. Encrypt .env with dotenvx
 echo ""
-echo "Encrypting .env with dotenvx..."
+echo "Encrypting .env..."
 dotenvx encrypt
 
 echo ""
