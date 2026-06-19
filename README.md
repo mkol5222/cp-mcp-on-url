@@ -12,7 +12,7 @@ caller ──(X-Api-Key)──► Caddy :8080
 
 - Docker & Docker Compose
 - `curl` (to install dotenvx)
-- A SentinelOne Cloud (S1C) tenant with an API key
+- A [Check Point Smart-1 Cloud tenant](https://portal.checkpoint.com/dashboard/security-management) with an API key - we are suggesting demo tenant for experiments ()
 
 ## First-time setup
 
