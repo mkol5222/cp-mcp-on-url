@@ -129,12 +129,45 @@ list_tools "quantum-management-mcp" "${BASE_URL}/quantum/mcp"
 list_tools "management-logs-mcp"    "${BASE_URL}/logs/mcp"
 
 # ---------------------------------------------------------------------------
+# Generate .mcp.json
+# ---------------------------------------------------------------------------
+header "VS Code MCP configuration"
+
+cat > .mcp.json <<EOF
+{
+  "servers": {
+    "quantum-management": {
+      "type": "http",
+      "url": "$BASE_URL/quantum/mcp",
+      "headers": { "X-Api-Key": "$PROXY_API_KEY" }
+    },
+    "management-logs": {
+      "type": "http",
+      "url": "$BASE_URL/logs/mcp",
+      "headers": { "X-Api-Key": "$PROXY_API_KEY" }
+    }
+  }
+}
+EOF
+
+pass ".mcp.json written  ${DIM}($(pwd)/.mcp.json)${RESET}"
+
+# ---------------------------------------------------------------------------
 # Summary
 # ---------------------------------------------------------------------------
 echo ""
 if [ "$ERRORS" -eq 0 ]; then
-  echo -e "${BOLD}${GREEN} ✔  All checks passed${RESET}\n"
+  echo -e "${BOLD}${GREEN} ✔  All checks passed${RESET}"
 else
-  echo -e "${BOLD}${RED} ✖  ${ERRORS} check(s) failed${RESET}\n"
-  exit 1
+  echo -e "${BOLD}${RED} ✖  ${ERRORS} check(s) failed${RESET}"
 fi
+
+echo ""
+echo -e "${BOLD}Try it in VS Code GitHub Copilot chat:${RESET}"
+echo -e "  1. Open ${CYAN}.mcp.json${RESET} in the editor (it is already in the workspace root)"
+echo -e "  2. Click ${BOLD}\"Start\"${RESET} in the MCP servers notification, or open the"
+echo -e "     GitHub Copilot chat panel and switch to ${BOLD}Agent${RESET} mode"
+echo -e "  3. Ask: ${YELLOW}\"Initialize the quantum management MCP and list available gateways\"${RESET}"
+echo ""
+
+[ "$ERRORS" -eq 0 ] || exit 1
