@@ -135,7 +135,7 @@ header "VS Code MCP configuration"
 
 cat > .mcp.json <<EOF
 {
-  "servers": {
+  "mcpServers": {
     "quantum-management": {
       "type": "http",
       "url": "$BASE_URL/quantum/mcp",
