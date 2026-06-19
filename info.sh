@@ -62,7 +62,7 @@ echo "-- VS Code .mcp.json --"
 echo ""
 cat <<EOF
 {
-  "servers": {
+  "mcpServers": {
     "quantum-management": {
       "type": "http",
       "url": "$BASE_URL/quantum/mcp",
