@@ -11,7 +11,7 @@ caller ──(X-Api-Key)──► Caddy :8080
 ## Prerequisites
 
 - Docker & Docker Compose, `curl` (to install dotenvx) - we recommend to open this repo in preconfigured Codespace/Devcontainer to cover dependencies
-- A [Check Point Smart-1 Cloud tenant](https://portal.checkpoint.com/dashboard/security-management) with an API key - we are suggesting demo tenant for experiments ()
+- A [Check Point Smart-1 Cloud tenant](https://portal.checkpoint.com/dashboard/security-management) with an API key - we are suggesting S1C demo tenant for experiments
 
 ## First-time setup
 
