@@ -1,0 +1,29 @@
+:8080 {
+        log {
+                output stdout
+                format console
+        }
+
+        @unauthorized not header X-Api-Key {env.PROXY_API_KEY}
+        handle @unauthorized {
+                header Content-Type text/plain
+                respond "401 Unauthorized: valid X-Api-Key header required" 401
+        }
+
+        handle_path /logs/* {
+                reverse_proxy management-logs-mcp:3000 {
+                        flush_interval -1
+                }
+        }
+
+        handle_path /quantum/* {
+                reverse_proxy quantum-management-mcp:3001 {
+                        flush_interval -1
+                }
+        }
+
+        handle {
+                header Content-Type text/plain
+                respond "Check Point MCP proxy. Endpoints: /logs/mcp  /quantum/mcp" 404
+        }
+}

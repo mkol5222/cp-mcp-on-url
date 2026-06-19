@@ -1,0 +1,32 @@
+services:
+  quantum-management-mcp:
+    image: node:24
+    entrypoint: npx
+    environment:
+      MCP_TRANSPORT_TYPE: http
+      MCP_TRANSPORT_PORT: "3001"
+      API_KEY: ${API_KEY}
+      S1C_URL: ${S1C_URL}
+    command: ["--", "npx", "@chkp/quantum-management-mcp"]
+
+  management-logs-mcp:
+    image: node:24
+    entrypoint: npx
+    environment:
+      MCP_TRANSPORT_TYPE: http
+      MCP_TRANSPORT_PORT: "3000"
+      API_KEY: ${API_KEY}
+      S1C_URL: ${S1C_URL}
+    command: ["--", "npx", "@chkp/management-logs-mcp"]
+
+  caddy:
+    image: caddy:2.11-alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./conf/Caddyfile:/etc/caddy/Caddyfile
+    environment:
+      PROXY_API_KEY: ${PROXY_API_KEY}
+    depends_on:
+      - quantum-management-mcp
+      - management-logs-mcp
