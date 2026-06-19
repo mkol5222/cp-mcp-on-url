@@ -121,6 +121,59 @@ list_tools() {
 }
 
 # ---------------------------------------------------------------------------
+# Init call helper
+# ---------------------------------------------------------------------------
+call_init() {
+  local label="$1"
+  local mcp_url="$2"
+  local tool_name="$3"
+
+  subheader "${ARROW} ${label}  ${DIM}(${tool_name})${RESET}"
+
+  local output
+  if ! output=$(npx -y @modelcontextprotocol/inspector --cli -- \
+      "$mcp_url" \
+      --header "X-Api-Key: $PROXY_API_KEY" \
+      --method tools/call \
+      --tool-name "$tool_name" 2>/dev/null); then
+    fail "${label} init failed — could not reach ${mcp_url}"
+    (( ERRORS++ )) || true
+    return
+  fi
+
+  # Print the response content, trimmed for readability
+  if command -v jq &>/dev/null; then
+    local text
+    text=$(echo "$output" | jq -r '.content[]?.text // empty' 2>/dev/null | head -10)
+    if [ -n "$text" ]; then
+      while IFS= read -r line; do
+        echo -e "   ${DIM}${line}${RESET}"
+      done <<< "$text"
+    else
+      echo -e "   ${DIM}${output}${RESET}" | head -5
+    fi
+  else
+    echo "$output" | head -5
+  fi
+
+  # Treat any non-error response as success
+  if echo "$output" | grep -qi '"isError":true'; then
+    fail "${label} init returned an error"
+    (( ERRORS++ )) || true
+  else
+    pass "${label} init succeeded"
+  fi
+}
+
+# ---------------------------------------------------------------------------
+# Init calls — verify S1C auth works end-to-end
+# ---------------------------------------------------------------------------
+header "MCP init (S1C authentication)"
+
+call_init "quantum-management-mcp" "${BASE_URL}/quantum/mcp" "management__init"
+call_init "management-logs-mcp"    "${BASE_URL}/logs/mcp"    "management-logs__init"
+
+# ---------------------------------------------------------------------------
 # Tool lists
 # ---------------------------------------------------------------------------
 header "Available tools"
