@@ -19,5 +19,5 @@
 	// ports come from forwardPorts, so it is often ignored by Codespaces.
 	// postStartCommand re-applies it via the gh CLI every time the codespace
 	// starts or resumes, which is the reliable workaround.
-	"postStartCommand": "gh codespace ports visibility 8080:public -c \"${CODESPACE_NAME}\" 2>/dev/null || true"
+	"postStartCommand": "gh codespace ports visibility 8080:public -c ${CODESPACE_NAME} 2>/dev/null || true"
 }
