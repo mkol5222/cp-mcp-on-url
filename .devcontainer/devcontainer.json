@@ -2,7 +2,8 @@
 	"name": "Ubuntu",
 	"image": "mcr.microsoft.com/devcontainers/base:noble",
 	"features": {
-		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
+		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
 	"forwardPorts": [8080],
 	"portsAttributes": {
