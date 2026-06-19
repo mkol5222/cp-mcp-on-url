@@ -2,10 +2,21 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# setup.sh — first-time setup: install dotenvx, populate and encrypt .env
+# setup.sh — first-time setup: install Node, dotenvx, populate and encrypt .env
 # ---------------------------------------------------------------------------
 
-# 1. Install dotenvx if not already present
+# 1. Install Node.js LTS if not already present
+if ! command -v node &>/dev/null; then
+  echo "Installing Node.js LTS..."
+  mkdir -p "$HOME/.local"
+  curl -sL https://install-node.vercel.app/lts | PREFIX="$HOME/.local" bash -s -- --yes
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
+echo "node $(node --version)  /  npm $(npm --version)"
+echo ""
+
+# 2. Install dotenvx if not already present
 if ! command -v dotenvx &>/dev/null; then
   echo "Installing dotenvx..."
   mkdir -p "$HOME/.local/bin"
