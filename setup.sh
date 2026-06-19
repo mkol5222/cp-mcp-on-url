@@ -8,8 +8,9 @@ set -euo pipefail
 # 1. Install dotenvx if not already present
 if ! command -v dotenvx &>/dev/null; then
   echo "Installing dotenvx..."
-  curl -sfS https://dotenvx.sh | sh
-  export PATH="$HOME/.dotenvx/bin:$PATH"
+  mkdir -p "$HOME/.local/bin"
+  curl -sfS "https://dotenvx.sh?directory=$HOME/.local/bin" | sh
+  export PATH="$HOME/.local/bin:$PATH"
 fi
 
 echo "dotenvx $(dotenvx --version)"

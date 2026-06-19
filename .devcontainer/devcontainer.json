@@ -3,5 +3,15 @@
 	"image": "mcr.microsoft.com/devcontainers/base:noble",
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {}
+	},
+	"forwardPorts": [8080],
+	"portsAttributes": {
+		"8080": {
+			"label": "MCP Proxy",
+			"onAutoForward": "notify",
+			"visibility": "public",
+			"protocol": "http",
+			"requireLocalPort": false
+		}
 	}
 }

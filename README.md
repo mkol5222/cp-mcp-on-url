@@ -35,32 +35,28 @@ Re-running `./setup.sh` lets you update individual values — existing ones are 
 ## Starting the stack
 
 ```bash
-./start.sh
+./start.sh        # foreground
+./start.sh -d     # background (detached)
 ```
 
-To run in the background:
+## Try it out
+
+After the stack is up, run:
 
 ```bash
-./start.sh -d
+./info.sh
 ```
 
-The proxy is reachable at `http://localhost:8080`.
+This prints the correct base URL (Codespaces public URL or `localhost`) together with your `PROXY_API_KEY`, so you can copy and run the curl commands directly.
 
 ## MCP endpoints
 
-| Path | Upstream |
-|---|---|
-| `http://localhost:8080/quantum/mcp` | quantum-management-mcp |
-| `http://localhost:8080/logs/mcp` | management-logs-mcp |
-
 Every request must include the `X-Api-Key` header matching `PROXY_API_KEY`.
 
-### Health checks
-
-```bash
-curl -s localhost:8080/quantum/health -H "X-Api-Key: <your-PROXY_API_KEY>"
-curl -s localhost:8080/logs/health    -H "X-Api-Key: <your-PROXY_API_KEY>"
-```
+| Path | Upstream |
+|---|---|
+| `<base-url>/quantum/mcp` | quantum-management-mcp |
+| `<base-url>/logs/mcp` | management-logs-mcp |
 
 ## Configuring an MCP client
 
