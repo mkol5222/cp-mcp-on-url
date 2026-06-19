@@ -47,7 +47,19 @@ After the stack is up, run:
 ./info.sh
 ```
 
-This prints the correct base URL (Codespaces public URL or `localhost`) together with your `PROXY_API_KEY`, so you can copy and run the curl commands directly.
+This prints the correct base URL (Codespaces public URL or `localhost`) together with your `PROXY_API_KEY`, and ready-to-copy `curl` and MCP Inspector CLI commands.
+
+## Test the stack
+
+```bash
+./test.sh
+```
+
+Runs a suite of checks and prints a colour-coded report:
+
+- Health endpoints for both MCP servers
+- Auth guard (unauthenticated requests rejected with HTTP 401)
+- Full list of available tools with descriptions from both servers
 
 ## MCP endpoints
 
