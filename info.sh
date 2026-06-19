@@ -58,3 +58,22 @@ echo ""
 echo "Call a tool with args (replace <tool-name> and key=value as needed):"
 echo "  npx -y @modelcontextprotocol/inspector --cli -- \"$BASE_URL/quantum/mcp\" --header \"X-Api-Key: $PROXY_API_KEY\" --method tools/call --tool-name <tool-name> --tool-arg key=value"
 echo ""
+echo "-- VS Code .mcp.json --"
+echo ""
+cat <<EOF
+{
+  "servers": {
+    "quantum-management": {
+      "type": "http",
+      "url": "$BASE_URL/quantum/mcp",
+      "headers": { "X-Api-Key": "$PROXY_API_KEY" }
+    },
+    "management-logs": {
+      "type": "http",
+      "url": "$BASE_URL/logs/mcp",
+      "headers": { "X-Api-Key": "$PROXY_API_KEY" }
+    }
+  }
+}
+EOF
+echo ""

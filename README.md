@@ -47,7 +47,7 @@ After the stack is up, run:
 ./info.sh
 ```
 
-This prints the correct base URL (Codespaces public URL or `localhost`) together with your `PROXY_API_KEY`, and ready-to-copy `curl` and MCP Inspector CLI commands.
+This prints the correct base URL (Codespaces public URL or `localhost`) together with your `PROXY_API_KEY`, and ready-to-copy `curl`, MCP Inspector CLI commands, and a `.mcp.json` snippet with the exact URLs and key filled in.
 
 ## Test the stack
 
@@ -70,24 +70,9 @@ Every request must include the `X-Api-Key` header matching `PROXY_API_KEY`.
 | `<base-url>/quantum/mcp` | quantum-management-mcp |
 | `<base-url>/logs/mcp` | management-logs-mcp |
 
-## Configuring an MCP client
+## Configuring VS Code
 
-Add both servers to your MCP client configuration (e.g. Claude Desktop, VS Code MCP extension):
-
-```json
-{
-  "mcpServers": {
-    "quantum-management": {
-      "url": "http://localhost:8080/quantum/mcp",
-      "headers": { "X-Api-Key": "<your-PROXY_API_KEY>" }
-    },
-    "management-logs": {
-      "url": "http://localhost:8080/logs/mcp",
-      "headers": { "X-Api-Key": "<your-PROXY_API_KEY>" }
-    }
-  }
-}
-```
+Run `./info.sh` to get a ready-to-paste `.mcp.json` block with the exact URLs and key for your environment. Save it as `.mcp.json` at the workspace root (already git-ignored) and VS Code will pick it up automatically.
 
 ## Stopping the stack
 
