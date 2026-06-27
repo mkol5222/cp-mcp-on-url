@@ -290,6 +290,80 @@ fi
 # Create / verify the OIDC client in Pocket ID using the static API key
 _setup_pocket_id_client
 
+# Ensure a public PKCE client exists for direct MCP tool clients (VS Code, Claude Desktop…)
+_setup_mcp_tool_client() {
+  local pocket_base="http://localhost:1411"
+  local api_key; api_key=$(_read_oauth_var POCKET_ID_STATIC_API_KEY)
+  local client_name="mcp-tool-client"
+
+  [ -z "$api_key" ] && return 0
+
+  local list_resp existing_id
+  list_resp=$(curl -s -H "X-Api-Key: ${api_key}" "${pocket_base}/api/oidc/clients" 2>/dev/null || echo '{"data":[]}')
+  existing_id=$(echo "$list_resp" | node -e "
+const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+const items=Array.isArray(d)?d:(d.data||[]);
+const c=items.find(x=>x.name==='${client_name}');
+if(c)process.stdout.write(c.id);
+" 2>/dev/null || echo "")
+
+  if [ -n "$existing_id" ]; then
+    echo "  Public MCP tool client already exists (id=${existing_id})"
+    return 0
+  fi
+
+  echo "  Creating public PKCE client '${client_name}' for MCP tools..."
+  local resp new_id
+  resp=$(curl -s -X POST \
+    -H "X-Api-Key: ${api_key}" \
+    -H "Content-Type: application/json" \
+    -d '{"name":"mcp-tool-client","callbackUrls":["http://localhost","http://localhost:3000/callback","http://localhost:8085/callback","http://127.0.0.1","http://127.0.0.1:3000/callback","http://127.0.0.1:8085/callback"],"isPublic":true,"pkceEnabled":true,"logoutCallbackUrls":[]}' \
+    "${pocket_base}/api/oidc/clients" 2>/dev/null || echo '{}')
+  new_id=$(echo "$resp" | node -e "
+const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+if(d.id)process.stdout.write(d.id);
+" 2>/dev/null || echo "")
+  if [ -n "$new_id" ]; then
+    echo "  Created: client_id=${new_id}  (public, PKCE, no secret needed)"
+  else
+    echo "  Warning: could not create mcp-tool-client. Response: ${resp}"
+  fi
+}
+_setup_mcp_tool_client
+
+# Ensure the admin user has a real email marked as verified so MCP clients accept the token.
+# Pocket ID passkey signup sets email_verified=false and uses a placeholder domain.
+_fix_admin_email() {
+  local pocket_base="http://localhost:1411"
+  local api_key; api_key=$(_read_oauth_var POCKET_ID_STATIC_API_KEY)
+  [ -z "$api_key" ] && return 0
+
+  local users_resp
+  users_resp=$(curl -s -H "X-Api-Key: ${api_key}" "${pocket_base}/api/users" 2>/dev/null || echo '{"data":[]}')
+
+  echo "$users_resp" | node -e "
+const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+const users=(d.data||[]).filter(u=>!u.email||u.email.endsWith('@nowhere.local')||u.emailVerified===false);
+if(users.length===0){process.stdout.write('ok');return;}
+users.forEach(u=>process.stdout.write(u.id+'|'+u.username+'|'+(u.email||'')+'|'+(u.firstName||'')+'|'+(u.lastName||'')+'|'+(u.isAdmin?'1':'0')+'\n'));
+" 2>/dev/null | while IFS='|' read -r uid uname email fn ln isadmin; do
+    if [ -z "$uid" ] || [ "$uid" = "ok" ]; then continue; fi
+    if [ "${email:-}" != "ok" ] && (echo "${email:-}" | grep -q "@nowhere.local" || [ -z "${email:-}" ]); then
+      echo "  User '${uname}' has placeholder email '${email:-<none>}'"
+      echo "  → Update email via Pocket ID admin: ${pocket_base}/admin/users/${uid}"
+    else
+      # Has a real email but emailVerified=false — mark it verified
+      curl -s -X PUT \
+        -H "X-Api-Key: ${api_key}" \
+        -H "Content-Type: application/json" \
+        -d "{\"username\":\"${uname}\",\"email\":\"${email}\",\"emailVerified\":true,\"firstName\":\"${fn}\",\"lastName\":\"${ln}\",\"isAdmin\":$([ "$isadmin" = "1" ] && echo true || echo false),\"locale\":null}" \
+        "${pocket_base}/api/users/${uid}" >/dev/null 2>&1 && \
+        echo "  User '${uname}': emailVerified set to true for ${email}"
+    fi
+  done
+}
+_fix_admin_email
+
 # ---------------------------------------------------------------------------
 # Stage 2: Start the rest of the OAuth stack with updated credentials
 # ---------------------------------------------------------------------------
