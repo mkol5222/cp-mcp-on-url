@@ -288,7 +288,7 @@ if $IN_CODESPACES && command -v gh &>/dev/null; then
 fi
 
 # Create / verify the OIDC client in Pocket ID using the static API key
-_setup_pocket_id_client
+# _setup_pocket_id_client
 
 # Ensure a public PKCE client exists for direct MCP tool clients (VS Code, Claude Desktop…)
 _setup_mcp_tool_client() {
@@ -331,7 +331,7 @@ if(d.id)process.stdout.write(d.id);
     echo "  Warning: could not create mcp-tool-client. Response: ${resp}"
   fi
 }
-_setup_mcp_tool_client
+# _setup_mcp_tool_client
 
 # Ensure the admin user has a real email marked as verified so MCP clients accept the token.
 # Pocket ID passkey signup sets email_verified=false and uses a placeholder domain.

@@ -1,7 +1,13 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(docker compose *)",
+      "Bash(curl -s -o /dev/null \"http://localhost:1411/authorize?response_type=code&client_id=7e19c16a-c1f0-42e9-b4d1-e58fb1e3c2ce&redirect_uri=https%3A%2F%2Fchatgpt.com%2Fconnector%2Foauth%2FcmTbcM0j9QxL&code_challenge=L_qSIb8wH8G4tEYN0CXXsAs7UcyLNts0jlwEq8VCQIk&code_challenge_method=S256&resource=https%3A%2F%2Fbookish-guide-g5wpv56xv2w75v-8080.app.github.dev&state=test&ui_locales=en-US\")"
+    ]
+  },
+  "enableAllProjectMcpServers": true,
   "enabledMcpjsonServers": [
     "quantum-management",
     "management-logs"
-  ],
-  "enableAllProjectMcpServers": true
+  ]
 }

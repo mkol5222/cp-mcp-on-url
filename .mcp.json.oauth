@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "quantum-management": {
+      "type": "http",
+      "url": "https://bookish-guide-g5wpv56xv2w75v-8080.app.github.dev/quantum/mcp"
+    },
+    "management-logs": {
+      "type": "http",
+      "url": "https://bookish-guide-g5wpv56xv2w75v-8080.app.github.dev/logs/mcp"
+    }
+  }
+}

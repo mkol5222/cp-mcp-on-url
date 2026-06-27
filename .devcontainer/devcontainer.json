@@ -3,9 +3,13 @@
 	"image": "mcr.microsoft.com/devcontainers/base:noble",
 	"features": {
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
-		"ghcr.io/devcontainers/features/github-cli:1": {}
+		"ghcr.io/devcontainers/features/github-cli:1": {},
+		"ghcr.io/devcontainers/features/python:1": {}
 	},
-	"forwardPorts": [8080, 1411],
+	"forwardPorts": [
+		8080,
+		1411
+	],
 	"portsAttributes": {
 		"8080": {
 			"label": "MCP Proxy",
