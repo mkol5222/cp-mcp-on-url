@@ -40,19 +40,15 @@ if [ -n "$MCP_URL" ] && command -v gh &>/dev/null; then
       gh codespace ports visibility 8080:public -c "$CODESPACE_NAME" 2>/dev/null \
         || echo "  Warning: could not set port visibility (check: gh auth status)"
       PORTS_JSON=$(gh codespace ports --json sourcePort,privacy,protocol -c "$CODESPACE_NAME" 2>/dev/null || echo "[]")
-      proto=$(echo "$PORTS_JSON" | python3 -c "
-import json,sys
-for p in json.load(sys.stdin):
-    if p.get('sourcePort') == 8080:
-        print(p.get('protocol','?'))
-        break
+      proto=$(echo "$PORTS_JSON" | node -e "
+const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+const p=d.find(x=>x.sourcePort===8080);
+process.stdout.write(p?p.protocol:'?');
 " 2>/dev/null || echo "?")
-      priv=$(echo "$PORTS_JSON" | python3 -c "
-import json,sys
-for p in json.load(sys.stdin):
-    if p.get('sourcePort') == 8080:
-        print(p.get('privacy','?'))
-        break
+      priv=$(echo "$PORTS_JSON" | node -e "
+const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
+const p=d.find(x=>x.sourcePort===8080);
+process.stdout.write(p?p.privacy:'?');
 " 2>/dev/null || echo "?")
       if [ "$proto" = "http" ] && [ "$priv" = "public" ]; then
         echo "  port 8080 : protocol=${proto}  visibility=${priv} ✓"

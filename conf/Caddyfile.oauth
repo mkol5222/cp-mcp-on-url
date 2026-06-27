@@ -4,35 +4,37 @@
 		format console
 	}
 
-	# API key auth for MCP clients (bypass OAuth)
+	# API key auth for MCP clients (bypass OAuth entirely)
 	@has_api_key header X-Api-Key {env.PROXY_API_KEY}
 
-	# Browser users with no session cookie and no Bearer token → send to login
-	# (Bearer token clients skip this; forward_auth below validates them directly)
+	# Browser users with no session cookie, no Bearer token, and no API key
+	# → redirect to Pocket ID login.
+	# header_regexp checks if Cookie header contains the oauth2-proxy session cookie.
 	@needs_login {
 		not header X-Api-Key *
 		not header Authorization *
 		not path /oauth2/*
-		not cookie _oauth2_proxy *
+		not header_regexp Cookie _oauth2_proxy
 	}
 
-	# OAuth auth for clients that have a session cookie or Bearer token
+	# Requests that carry authentication (session cookie or Bearer token)
+	# → validate via forward_auth before proxying to MCP services.
 	@needs_oauth {
 		not header X-Api-Key *
 		not path /oauth2/*
 	}
 
-	# OAuth2-proxy endpoints (pass through)
+	# OAuth2-proxy endpoints (sign-in, callback, etc.)
 	handle /oauth2/* {
 		reverse_proxy oauth2-proxy:4180
 	}
 
-	# Redirect unauthenticated browser requests to Pocket ID login
+	# Redirect unauthenticated browser requests to Pocket ID via oauth2-proxy
 	handle @needs_login {
 		redir * /oauth2/start?rd={http.request.uri} 302
 	}
 
-	# Validate session cookie or Bearer token via forward_auth
+	# Validate session cookie or Bearer token, then proxy to MCP services
 	handle @needs_oauth {
 		forward_auth oauth2-proxy:4180 {
 			uri /oauth2/auth
@@ -57,7 +59,7 @@
 		}
 	}
 
-	# API key authenticated requests
+	# API key authenticated requests — bypass OAuth entirely
 	handle @has_api_key {
 		handle_path /logs/* {
 			reverse_proxy management-logs-mcp:3000 {
