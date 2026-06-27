@@ -54,8 +54,22 @@
 		}
 
 		handle {
-			header Content-Type text/plain
-			respond "Check Point MCP proxy (OAuth). Endpoints: /logs/mcp  /quantum/mcp" 200
+			header Content-Type "text/html; charset=utf-8"
+			respond `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Check Point MCP Proxy</title>
+<style>body{font-family:sans-serif;max-width:600px;margin:2rem auto;padding:0 1rem}
+h1{font-size:1.2rem}table{border-collapse:collapse;width:100%}
+td,th{text-align:left;padding:.4rem .8rem;border-bottom:1px solid #ddd}
+th{font-weight:600;color:#555;font-size:.85rem}
+a{color:#0066cc}code{background:#f4f4f4;padding:.1rem .3rem;border-radius:3px;font-size:.9rem}</style>
+</head><body>
+<h1>Check Point MCP Proxy</h1>
+<table>
+<tr><th>Service</th><th>MCP endpoint</th><th>Health</th></tr>
+<tr><td>Quantum Management</td><td><a href="/quantum/mcp"><code>/quantum/mcp</code></a></td><td><a href="/quantum/health">/quantum/health</a></td></tr>
+<tr><td>Management Logs</td><td><a href="/logs/mcp"><code>/logs/mcp</code></a></td><td><a href="/logs/health">/logs/health</a></td></tr>
+</table>
+</body></html>` 200
 		}
 	}
 
@@ -74,8 +88,22 @@
 		}
 
 		handle {
-			header Content-Type text/plain
-			respond "Check Point MCP proxy (API Key). Endpoints: /logs/mcp  /quantum/mcp" 200
+			header Content-Type "text/html; charset=utf-8"
+			respond `<!doctype html><html lang="en"><head><meta charset="utf-8">
+<title>Check Point MCP Proxy</title>
+<style>body{font-family:sans-serif;max-width:600px;margin:2rem auto;padding:0 1rem}
+h1{font-size:1.2rem}table{border-collapse:collapse;width:100%}
+td,th{text-align:left;padding:.4rem .8rem;border-bottom:1px solid #ddd}
+th{font-weight:600;color:#555;font-size:.85rem}
+a{color:#0066cc}code{background:#f4f4f4;padding:.1rem .3rem;border-radius:3px;font-size:.9rem}</style>
+</head><body>
+<h1>Check Point MCP Proxy</h1>
+<table>
+<tr><th>Service</th><th>MCP endpoint</th><th>Health</th></tr>
+<tr><td>Quantum Management</td><td><a href="/quantum/mcp"><code>/quantum/mcp</code></a></td><td><a href="/quantum/health">/quantum/health</a></td></tr>
+<tr><td>Management Logs</td><td><a href="/logs/mcp"><code>/logs/mcp</code></a></td><td><a href="/logs/health">/logs/health</a></td></tr>
+</table>
+</body></html>` 200
 		}
 	}
 
