@@ -30,7 +30,7 @@ services:
     command: ["--", "npx", "@chkp/management-logs-mcp"]
 
   pocket-id:
-    image: ghcr.io/pocket-id/pocket-id:latest
+    image: ghcr.io/pocket-id/pocket-id:v2
     environment:
       APP_URL: ${POCKET_ID_URL:-http://localhost:1411}
       TRUST_PROXY: "true"
