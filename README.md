@@ -27,6 +27,8 @@ This repo wraps the MCP servers in a stack that addresses each gap:
 | Process isolation | Containerised MCP servers | Docker / Docker Compose |
 | Reproducible environment | Dev Container with pre-installed tooling | GitHub Codespaces / Dev Containers |
 | Secrets in version control | Encrypted `.env` | dotenvx |
+| Cloud vs on-prem flexibility | Dual backend support | S1C or local management server |
+| SSO / browser auth | OAuth option | Pocket ID + oauth2-proxy |
 
 ```
 caller ──(X-Api-Key, HTTPS)──► Caddy :8080
@@ -37,7 +39,23 @@ caller ──(X-Api-Key, HTTPS)──► Caddy :8080
 ## Prerequisites
 
 - Docker & Docker Compose, `curl` (to install dotenvx) - we recommend to open this repo in preconfigured Codespace/Devcontainer to cover dependencies
-- A [Check Point Smart-1 Cloud tenant](https://portal.checkpoint.com/dashboard/security-management) with an API key - we are suggesting S1C demo tenant for experiments
+- **One of:**
+  - A [Check Point Smart-1 Cloud tenant](https://portal.checkpoint.com/dashboard/security-management) with an API key
+  - An on-premises Check Point management server (defaults provided for demo)
+
+## Management Server Options
+
+The stack supports two backend modes:
+
+| Mode | When to use | Required variables |
+|------|-------------|-------------------|
+| **Smart-1 Cloud (S1C)** | Production S1C tenants | `API_KEY`, `S1C_URL` |
+| **Local Management** | On-prem servers, demos | `MANAGEMENT_HOST`, `USERNAME`, `PASSWORD` |
+
+**Zero-config demo:** Leave `S1C_URL` empty and the stack uses sensible defaults:
+- `MANAGEMENT_HOST=cpman.duckdns.org`
+- `USERNAME=admin`
+- `PASSWORD=demo123`
 
 ## First-time setup
 
@@ -45,17 +63,20 @@ caller ──(X-Api-Key, HTTPS)──► Caddy :8080
 ./setup.sh
 ```
 
-The script interactively prompts for the three required values, writes them with `dotenvx set`, and encrypts `.env`:
+The script interactively prompts for values, writes them with `dotenvx set`, and encrypts `.env`:
 
 | Prompt | Variable | Description |
 |---|---|---|
-| S1C API key | `API_KEY` | Your S1C API key |
-| S1C tenant web-API URL | `S1C_URL` | Your S1C tenant URL ending in `/web_api/` |
+| S1C API key | `API_KEY` | Your S1C API key (leave empty for local mgmt) |
+| S1C tenant web-API URL | `S1C_URL` | Your S1C tenant URL ending in `/web_api/` (leave empty for local mgmt) |
+| Management host | `MANAGEMENT_HOST` | On-prem server hostname (default: `cpman.duckdns.org`) |
+| Username | `USERNAME` | Management server username (default: `admin`) |
+| Password | `PASSWORD` | Management server password (default: `demo123`) |
 | Proxy API key | `PROXY_API_KEY` | Secret callers must supply as `X-Api-Key` header |
 
 Re-running `./setup.sh` lets you update individual values — existing ones are shown and kept if you press Enter.
 
-> **Security note:** `./setup.sh` produces a `.env.keys` file containing the decryption key.  
+> **Security note:** `./setup.sh` produces a `.env.keys` file containing the decryption key.
 > Both `.env` and `.env.keys` are git-ignored. Back up `.env.keys` securely — without it the encrypted `.env` cannot be decrypted.
 
 ## Starting the stack
@@ -105,3 +126,35 @@ Run `./info.sh` to get a ready-to-paste `.mcp.json` block with the exact URLs an
 ```bash
 docker compose down
 ```
+
+## Authentication Options
+
+The stack supports two authentication modes for the proxy layer:
+
+### Option 1: API Key (default)
+
+Simple header-based authentication — callers include `X-Api-Key` header. Best for MCP clients.
+
+```
+docker compose up
+```
+
+### Option 2: OAuth with Pocket ID
+
+Browser-based SSO using [Pocket ID](https://pocket-id.org/) as OIDC provider with passkey authentication. Supports both:
+- **API key** for MCP clients (via `X-Api-Key` header)
+- **OAuth flow** for browser users (redirects to Pocket ID login)
+
+```bash
+# See OAUTH-SETUP.md for full instructions
+./start-oauth.sh
+```
+
+| File | Purpose |
+|------|---------|
+| `docker-compose.oauth.yml` | Stack with Pocket ID + oauth2-proxy |
+| `conf/Caddyfile.oauth` | Dual auth: API key OR OAuth |
+| `.env.oauth.example` | Environment template |
+| `OAUTH-SETUP.md` | Step-by-step guide |
+
+**Note:** Pocket ID uses passkeys (WebAuthn) — no passwords. Users must register interactively via browser.

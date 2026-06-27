@@ -27,55 +27,103 @@ fi
 echo "dotenvx $(dotenvx --version)"
 echo ""
 
-# 2. Prompt helper — re-asks until a non-empty value is given.
-#    Usage: prompt_var VAR_NAME "Display label" [secret]
-prompt_var() {
-  local var="$1"
-  local label="$2"
-  local secret="${3:-}"
-  local value=""
+# ---------------------------------------------------------------------------
+# Prompt helpers
+# ---------------------------------------------------------------------------
 
-  # If already set in .env and not a placeholder, offer to keep it
-  if [ -f .env ]; then
-    existing=$(dotenvx get "$var" 2>/dev/null || true)
-    if [ -n "$existing" ] && [[ "$existing" != *"your_"* ]] && [[ "$existing" != "change-me" ]]; then
-      if [ -n "$secret" ]; then
-        echo "$label [current: ****]: "
-      else
-        echo "$label [current: $existing]: "
-      fi
-      read -r value
-      if [ -z "$value" ]; then
-        return  # keep existing
-      fi
-      dotenvx set "$var" "$value" >/dev/null
-      return
-    fi
-  fi
-
+# prompt_required VAR_NAME "label" [secret] — re-asks until non-empty
+prompt_required() {
+  local var="$1" label="$2" secret="${3:-}" value=""
   while [ -z "$value" ]; do
     if [ -n "$secret" ]; then
-      read -rsp "$label: " value
-      echo
+      read -rsp "$label: " value; echo
     else
       read -rp "$label: " value
     fi
-    if [ -z "$value" ]; then
-      echo "  Value cannot be empty, please try again."
-    fi
+    [ -z "$value" ] && echo "  Value cannot be empty, please try again."
   done
-
   dotenvx set "$var" "$value" >/dev/null
 }
 
+# prompt_optional VAR_NAME "label" [secret] — allows empty, returns value
+prompt_optional() {
+  local var="$1" label="$2" secret="${3:-}" value=""
+  if [ -n "$secret" ]; then
+    read -rsp "$label: " value; echo
+  else
+    read -rp "$label: " value
+  fi
+  dotenvx set "$var" "$value" >/dev/null
+  echo "$value"
+}
+
+# set_var VAR_NAME value — silently set a variable
+set_var() {
+  dotenvx set "$1" "$2" >/dev/null
+}
+
+# ---------------------------------------------------------------------------
 # 3. Interactively populate all required variables
+# ---------------------------------------------------------------------------
 echo "Configure your Check Point MCP proxy"
 echo "-------------------------------------"
 echo ""
+echo "Choose configuration mode:"
+echo "  1) Demo (cpman.duckdns.org with default credentials)"
+echo "  2) Smart-1 Cloud (S1C)"
+echo "  3) Local Management Server"
+echo ""
+read -rp "Selection [1/2/3]: " mode
 
-prompt_var API_KEY      "S1C API key" secret
-prompt_var S1C_URL      "S1C tenant web-API URL (ending in /web_api/)"
-prompt_var PROXY_API_KEY "Proxy API key (X-Api-Key callers must supply)" secret
+case "$mode" in
+  1)
+    # Demo mode: cpman.duckdns.org with defaults
+    echo ""
+    echo "Using demo configuration:"
+    echo "  MANAGEMENT_HOST = cpman.duckdns.org"
+    echo "  USERNAME        = admin"
+    echo "  PASSWORD        = demo123"
+    set_var S1C_URL ""
+    set_var API_KEY ""
+    set_var MANAGEMENT_HOST "cpman.duckdns.org"
+    set_var USERNAME "admin"
+    set_var PASSWORD "demo123"
+    ;;
+  2)
+    # S1C mode
+    echo ""
+    echo "Smart-1 Cloud configuration"
+    prompt_required S1C_URL "S1C tenant web-API URL (ending in /web_api/)"
+    prompt_required API_KEY "S1C API key" secret
+    set_var MANAGEMENT_HOST ""
+    set_var USERNAME ""
+    set_var PASSWORD ""
+    ;;
+  3)
+    # Local management mode
+    echo ""
+    echo "Local Management Server configuration"
+    prompt_required MANAGEMENT_HOST "Management server hostname or IP"
+    echo ""
+    echo "Authentication: API key (recommended) or username/password"
+    api_key=$(prompt_optional API_KEY "API key (press Enter to use username/password instead)" secret)
+    if [ -z "$api_key" ]; then
+      prompt_required USERNAME "Username"
+      prompt_required PASSWORD "Password" secret
+    else
+      set_var USERNAME ""
+      set_var PASSWORD ""
+    fi
+    set_var S1C_URL ""
+    ;;
+  *)
+    echo "Invalid selection. Exiting."
+    exit 1
+    ;;
+esac
+
+echo ""
+prompt_required PROXY_API_KEY "Proxy API key (X-Api-Key callers must supply)" secret
 
 # 4. Encrypt .env with dotenvx
 echo ""
