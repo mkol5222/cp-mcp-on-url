@@ -34,11 +34,20 @@
 	}
 
 	# ---------------------------------------------------------------------------
-	# OAuth 2.0 / MCP discovery — no auth required
-	# /.well-known/oauth-protected-resource tells MCP clients where the AS is.
-	# Clients that don't find /.well-known/oauth-authorization-server at Pocket ID
-	# automatically fall back to /.well-known/openid-configuration (which exists).
+	# OAuth 2.0 / MCP discovery — no auth required (RFC 9728)
+	# Per-path metadata so VS Code's strict resource-match check passes.
+	# Base endpoint kept for clients that discover at the root.
 	# ---------------------------------------------------------------------------
+	handle /.well-known/oauth-protected-resource/logs/mcp {
+		header Content-Type "application/json"
+		respond `{"resource":"{env.MCP_BASE_URL}/logs/mcp","authorization_servers":["{env.POCKET_ID_URL}"],"bearer_methods_supported":["header"]}` 200
+	}
+
+	handle /.well-known/oauth-protected-resource/quantum/mcp {
+		header Content-Type "application/json"
+		respond `{"resource":"{env.MCP_BASE_URL}/quantum/mcp","authorization_servers":["{env.POCKET_ID_URL}"],"bearer_methods_supported":["header"]}` 200
+	}
+
 	handle /.well-known/oauth-protected-resource {
 		header Content-Type "application/json"
 		respond `{"resource":"{env.MCP_BASE_URL}","authorization_servers":["{env.POCKET_ID_URL}"],"bearer_methods_supported":["header"]}` 200

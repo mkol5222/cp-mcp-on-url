@@ -309,6 +309,7 @@ if(c)process.stdout.write(c.id);
 
   if [ -n "$existing_id" ]; then
     echo "  Public MCP tool client already exists (id=${existing_id})"
+    _set_oauth_var MCP_TOOL_CLIENT_ID "${existing_id}"
     return 0
   fi
 
@@ -324,6 +325,7 @@ const d=JSON.parse(require('fs').readFileSync('/dev/stdin','utf8'));
 if(d.id)process.stdout.write(d.id);
 " 2>/dev/null || echo "")
   if [ -n "$new_id" ]; then
+    _set_oauth_var MCP_TOOL_CLIENT_ID "${new_id}"
     echo "  Created: client_id=${new_id}  (public, PKCE, no secret needed)"
   else
     echo "  Warning: could not create mcp-tool-client. Response: ${resp}"

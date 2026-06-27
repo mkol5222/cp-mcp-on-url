@@ -82,6 +82,9 @@ services:
       OAUTH2_PROXY_REVERSE_PROXY: "true"
       # Accept Bearer tokens from Pocket ID (no X-Api-Key needed for OAuth clients)
       OAUTH2_PROXY_SKIP_JWT_BEARER_TOKENS: "true"
+      # Also accept tokens issued to mcp-tool-client (used by VS Code, ChatGPT, etc.)
+      OAUTH2_PROXY_EXTRA_JWT_ISSUERS: ""
+      OAUTH2_PROXY_OIDC_EXTRA_AUDIENCES: ${MCP_TOOL_CLIENT_ID:-}
       # Pocket ID is passkey-based and never sends email_verified=true in the id_token
       OAUTH2_PROXY_INSECURE_OIDC_ALLOW_UNVERIFIED_EMAIL: "true"
     depends_on:
