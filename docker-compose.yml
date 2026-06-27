@@ -5,8 +5,13 @@ services:
     environment:
       MCP_TRANSPORT_TYPE: http
       MCP_TRANSPORT_PORT: "3001"
-      API_KEY: ${API_KEY}
-      S1C_URL: ${S1C_URL}
+      # S1C (cloud) auth - leave S1C_URL empty to use local management instead
+      API_KEY: ${API_KEY:-}
+      S1C_URL: ${S1C_URL:-}
+      # Local management auth (used when S1C_URL is empty)
+      MANAGEMENT_HOST: ${MANAGEMENT_HOST:-cpman.duckdns.org}
+      USERNAME: ${USERNAME:-admin}
+      PASSWORD: ${PASSWORD:-demo123}
     command: ["--", "npx", "@chkp/quantum-management-mcp"]
 
   management-logs-mcp:
@@ -15,8 +20,13 @@ services:
     environment:
       MCP_TRANSPORT_TYPE: http
       MCP_TRANSPORT_PORT: "3000"
-      API_KEY: ${API_KEY}
-      S1C_URL: ${S1C_URL}
+      # S1C (cloud) auth - leave S1C_URL empty to use local management instead
+      API_KEY: ${API_KEY:-}
+      S1C_URL: ${S1C_URL:-}
+      # Local management auth (used when S1C_URL is empty)
+      MANAGEMENT_HOST: ${MANAGEMENT_HOST:-cpman.duckdns.org}
+      USERNAME: ${USERNAME:-admin}
+      PASSWORD: ${PASSWORD:-demo123}
     command: ["--", "npx", "@chkp/management-logs-mcp"]
 
   caddy:
