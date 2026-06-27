@@ -1,0 +1,71 @@
+:8080 {
+	log {
+		output stdout
+		format console
+	}
+
+	# API key auth for MCP clients (bypass OAuth)
+	@has_api_key header X-Api-Key {env.PROXY_API_KEY}
+
+	# OAuth auth for browser users (no API key)
+	@needs_oauth {
+		not header X-Api-Key *
+		not path /oauth2/*
+	}
+
+	# OAuth2-proxy endpoints (pass through)
+	handle /oauth2/* {
+		reverse_proxy oauth2-proxy:4180
+	}
+
+	# Forward auth for requests without API key
+	handle @needs_oauth {
+		forward_auth oauth2-proxy:4180 {
+			uri /oauth2/auth
+			copy_headers X-Auth-Request-User X-Auth-Request-Email X-Auth-Request-Groups
+		}
+
+		handle_path /logs/* {
+			reverse_proxy management-logs-mcp:3000 {
+				flush_interval -1
+			}
+		}
+
+		handle_path /quantum/* {
+			reverse_proxy quantum-management-mcp:3001 {
+				flush_interval -1
+			}
+		}
+
+		handle {
+			header Content-Type text/plain
+			respond "Check Point MCP proxy (OAuth). Endpoints: /logs/mcp  /quantum/mcp" 200
+		}
+	}
+
+	# API key authenticated requests
+	handle @has_api_key {
+		handle_path /logs/* {
+			reverse_proxy management-logs-mcp:3000 {
+				flush_interval -1
+			}
+		}
+
+		handle_path /quantum/* {
+			reverse_proxy quantum-management-mcp:3001 {
+				flush_interval -1
+			}
+		}
+
+		handle {
+			header Content-Type text/plain
+			respond "Check Point MCP proxy (API Key). Endpoints: /logs/mcp  /quantum/mcp" 200
+		}
+	}
+
+	# Reject requests without valid auth
+	handle {
+		header Content-Type text/plain
+		respond "401 Unauthorized: provide X-Api-Key header or authenticate via OAuth" 401
+	}
+}
