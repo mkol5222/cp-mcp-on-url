@@ -96,6 +96,8 @@ services:
       - ./conf/Caddyfile.oauth:/etc/caddy/Caddyfile
     environment:
       PROXY_API_KEY: ${PROXY_API_KEY}
+      POCKET_ID_URL: ${POCKET_ID_URL}
+      MCP_BASE_URL: ${MCP_BASE_URL:-http://localhost:8080}
     depends_on:
       - quantum-management-mcp
       - management-logs-mcp

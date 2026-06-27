@@ -85,8 +85,10 @@ if [ -n "${CODESPACE_NAME:-}" ] && [ -n "${GITHUB_CODESPACES_PORT_FORWARDING_DOM
     if [[ "$answer" =~ ^[Yy] ]]; then
       _set_oauth_var POCKET_ID_URL "$POCKET_URL"
       _set_oauth_var OAUTH2_REDIRECT_URL "$REDIRECT_URL"
+      _set_oauth_var MCP_BASE_URL "$MCP_URL"
       echo "  POCKET_ID_URL       → $POCKET_URL"
       echo "  OAUTH2_REDIRECT_URL → $REDIRECT_URL"
+      echo "  MCP_BASE_URL        → $MCP_URL"
       echo ""
     fi
   else

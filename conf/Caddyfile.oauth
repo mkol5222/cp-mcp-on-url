@@ -7,26 +7,52 @@
 	# API key auth for MCP clients (bypass OAuth entirely)
 	@has_api_key header X-Api-Key {env.PROXY_API_KEY}
 
-	# Browser users with no session cookie, no Bearer token, and no API key
-	# → redirect to Pocket ID login.
-	# header_regexp checks if Cookie header contains the oauth2-proxy session cookie.
+	# Browser users with no session cookie, no Bearer token, and no API key.
+	# Excludes /.well-known/* and MCP API paths — those get proper 401 + WWW-Authenticate.
 	@needs_login {
 		not header X-Api-Key *
 		not header Authorization *
 		not path /oauth2/*
+		not path /.well-known/*
+		not path /quantum/mcp /logs/mcp
 		not header_regexp Cookie _oauth2_proxy
 	}
 
-	# Requests that carry authentication (session cookie or Bearer token)
-	# → validate via forward_auth before proxying to MCP services.
+	# MCP endpoints hit by a client that has no auth at all.
+	# Return 401 + WWW-Authenticate so the client can discover OAuth.
+	@mcp_unauthenticated {
+		path /quantum/mcp /logs/mcp
+		not header X-Api-Key *
+		not header Authorization *
+		not header_regexp Cookie _oauth2_proxy
+	}
+
+	# Requests that carry authentication (session cookie or Bearer token).
 	@needs_oauth {
 		not header X-Api-Key *
 		not path /oauth2/*
 	}
 
+	# ---------------------------------------------------------------------------
+	# OAuth 2.0 / MCP discovery — no auth required
+	# /.well-known/oauth-protected-resource tells MCP clients where the AS is.
+	# Clients that don't find /.well-known/oauth-authorization-server at Pocket ID
+	# automatically fall back to /.well-known/openid-configuration (which exists).
+	# ---------------------------------------------------------------------------
+	handle /.well-known/oauth-protected-resource {
+		header Content-Type "application/json"
+		respond `{"resource":"{env.MCP_BASE_URL}","authorization_servers":["{env.POCKET_ID_URL}"],"bearer_methods_supported":["header"]}` 200
+	}
+
 	# OAuth2-proxy endpoints (sign-in, callback, etc.)
 	handle /oauth2/* {
 		reverse_proxy oauth2-proxy:4180
+	}
+
+	# MCP clients with no auth → tell them to discover OAuth via WWW-Authenticate
+	handle @mcp_unauthenticated {
+		header WWW-Authenticate `Bearer resource_metadata="{env.MCP_BASE_URL}/.well-known/oauth-protected-resource"`
+		respond 401
 	}
 
 	# Redirect unauthenticated browser requests to Pocket ID via oauth2-proxy
