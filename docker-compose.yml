@@ -101,6 +101,7 @@ services:
       PROXY_API_KEY: ${PROXY_API_KEY}
       POCKET_ID_URL: ${POCKET_ID_URL}
       MCP_BASE_URL: ${MCP_BASE_URL:-http://localhost:8080}
+      MCP_TOOL_CLIENT_ID: ${MCP_TOOL_CLIENT_ID:-}
     depends_on:
       - quantum-management-mcp
       - management-logs-mcp
