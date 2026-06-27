@@ -1,0 +1,7 @@
+{
+  "enabledMcpjsonServers": [
+    "quantum-management",
+    "management-logs"
+  ],
+  "enableAllProjectMcpServers": true
+}

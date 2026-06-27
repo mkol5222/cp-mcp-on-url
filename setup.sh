@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # ---------------------------------------------------------------------------
-# setup.sh — first-time setup: install Node, dotenvx, populate and encrypt .env
+# setup.sh — first-time setup: install Node, dotenvx, cloudflared, populate and encrypt .env
 # ---------------------------------------------------------------------------
 
 # 1. Install Node.js LTS if not already present
@@ -25,6 +25,25 @@ if ! command -v dotenvx &>/dev/null; then
 fi
 
 echo "dotenvx $(dotenvx --version)"
+echo ""
+
+# 3. Install cloudflared if not already present
+if ! command -v cloudflared &>/dev/null; then
+  echo "Installing cloudflared..."
+  mkdir -p "$HOME/.local/bin"
+  ARCH=$(uname -m)
+  case "$ARCH" in
+    x86_64)  CF_ARCH="amd64" ;;
+    aarch64|arm64) CF_ARCH="arm64" ;;
+    *) echo "Unsupported architecture: $ARCH"; exit 1 ;;
+  esac
+  curl -sL "https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${CF_ARCH}" \
+    -o "$HOME/.local/bin/cloudflared"
+  chmod +x "$HOME/.local/bin/cloudflared"
+  export PATH="$HOME/.local/bin:$PATH"
+fi
+
+echo "cloudflared $(cloudflared --version | head -1)"
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -63,7 +82,7 @@ set_var() {
 }
 
 # ---------------------------------------------------------------------------
-# 3. Interactively populate all required variables
+# 4. Interactively populate all required variables
 # ---------------------------------------------------------------------------
 echo "Configure your Check Point MCP proxy"
 echo "-------------------------------------"
@@ -125,7 +144,7 @@ esac
 echo ""
 prompt_required PROXY_API_KEY "Proxy API key (X-Api-Key callers must supply)" secret
 
-# 4. Encrypt .env with dotenvx
+# 5. Encrypt .env with dotenvx
 echo ""
 echo "Encrypting .env..."
 dotenvx encrypt
