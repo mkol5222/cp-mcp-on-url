@@ -29,7 +29,11 @@ services:
       PASSWORD: ${PASSWORD:-demo123}
     command: ["--", "npx", "@chkp/management-logs-mcp"]
 
+  # ---------------------------------------------------------------------------
+  # Basic mode (API key auth only) — started with: docker compose --profile basic up
+  # ---------------------------------------------------------------------------
   caddy:
+    profiles: [basic]
     image: caddy:2.11-alpine
     ports:
       - "8080:8080"
@@ -40,3 +44,60 @@ services:
     depends_on:
       - quantum-management-mcp
       - management-logs-mcp
+
+  # ---------------------------------------------------------------------------
+  # OAuth mode — started with: docker compose --profile oauth up
+  # ---------------------------------------------------------------------------
+  pocket-id:
+    profiles: [oauth]
+    image: ghcr.io/pocket-id/pocket-id:v2
+    restart: unless-stopped
+    environment:
+      APP_URL: ${POCKET_ID_URL:-http://localhost:1411}
+      TRUST_PROXY: "true"
+      ALLOW_USER_SIGNUPS: "withToken"
+      STATIC_API_KEY: ${POCKET_ID_STATIC_API_KEY}
+      ENCRYPTION_KEY: ${POCKET_ID_ENCRYPTION_KEY}
+    volumes:
+      - pocket-id-data:/app/data
+    ports:
+      - "1411:1411"
+
+  oauth2-proxy:
+    profiles: [oauth]
+    image: quay.io/oauth2-proxy/oauth2-proxy:latest
+    environment:
+      OAUTH2_PROXY_PROVIDER: oidc
+      OAUTH2_PROXY_OIDC_ISSUER_URL: ${POCKET_ID_URL:-http://pocket-id:1411}
+      OAUTH2_PROXY_CLIENT_ID: ${OIDC_CLIENT_ID}
+      OAUTH2_PROXY_CLIENT_SECRET: ${OIDC_CLIENT_SECRET}
+      OAUTH2_PROXY_COOKIE_SECRET: ${OAUTH2_COOKIE_SECRET}
+      OAUTH2_PROXY_COOKIE_SECURE: "true"
+      OAUTH2_PROXY_EMAIL_DOMAINS: "*"
+      OAUTH2_PROXY_UPSTREAMS: "static://200"
+      OAUTH2_PROXY_HTTP_ADDRESS: "0.0.0.0:4180"
+      OAUTH2_PROXY_REDIRECT_URL: ${OAUTH2_REDIRECT_URL}
+      OAUTH2_PROXY_SCOPE: "openid email profile"
+      OAUTH2_PROXY_SKIP_PROVIDER_BUTTON: "true"
+      OAUTH2_PROXY_REVERSE_PROXY: "true"
+      # Accept Bearer tokens from Pocket ID (no X-Api-Key needed for OAuth clients)
+      OAUTH2_PROXY_SKIP_JWT_BEARER_TOKENS: "true"
+    depends_on:
+      - pocket-id
+
+  caddy-oauth:
+    profiles: [oauth]
+    image: caddy:2.11-alpine
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./conf/Caddyfile.oauth:/etc/caddy/Caddyfile
+    environment:
+      PROXY_API_KEY: ${PROXY_API_KEY}
+    depends_on:
+      - quantum-management-mcp
+      - management-logs-mcp
+      - oauth2-proxy
+
+volumes:
+  pocket-id-data:

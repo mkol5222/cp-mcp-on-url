@@ -7,7 +7,16 @@
 	# API key auth for MCP clients (bypass OAuth)
 	@has_api_key header X-Api-Key {env.PROXY_API_KEY}
 
-	# OAuth auth for browser users (no API key)
+	# Browser users with no session cookie and no Bearer token → send to login
+	# (Bearer token clients skip this; forward_auth below validates them directly)
+	@needs_login {
+		not header X-Api-Key *
+		not header Authorization *
+		not path /oauth2/*
+		not cookie _oauth2_proxy *
+	}
+
+	# OAuth auth for clients that have a session cookie or Bearer token
 	@needs_oauth {
 		not header X-Api-Key *
 		not path /oauth2/*
@@ -18,7 +27,12 @@
 		reverse_proxy oauth2-proxy:4180
 	}
 
-	# Forward auth for requests without API key
+	# Redirect unauthenticated browser requests to Pocket ID login
+	handle @needs_login {
+		redir * /oauth2/start?rd={http.request.uri} 302
+	}
+
+	# Validate session cookie or Bearer token via forward_auth
 	handle @needs_oauth {
 		forward_auth oauth2-proxy:4180 {
 			uri /oauth2/auth
@@ -63,7 +77,6 @@
 		}
 	}
 
-	# Reject requests without valid auth
 	handle {
 		header Content-Type text/plain
 		respond "401 Unauthorized: provide X-Api-Key header or authenticate via OAuth" 401

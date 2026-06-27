@@ -5,10 +5,17 @@
 		"ghcr.io/devcontainers/features/docker-in-docker:2": {},
 		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
-	"forwardPorts": [8080],
+	"forwardPorts": [8080, 1411],
 	"portsAttributes": {
 		"8080": {
 			"label": "MCP Proxy",
+			"onAutoForward": "notify",
+			"visibility": "public",
+			"protocol": "http",
+			"requireLocalPort": false
+		},
+		"1411": {
+			"label": "Pocket ID",
 			"onAutoForward": "notify",
 			"visibility": "public",
 			"protocol": "http",
@@ -19,5 +26,5 @@
 	// ports come from forwardPorts, so it is often ignored by Codespaces.
 	// postStartCommand re-applies it via the gh CLI every time the codespace
 	// starts or resumes, which is the reliable workaround.
-	"postStartCommand": "gh codespace ports visibility 8080:public -c ${CODESPACE_NAME} 2>/dev/null || true"
+	"postStartCommand": "gh codespace ports visibility 8080:public 1411:public -c ${CODESPACE_NAME} 2>/dev/null || true"
 }
