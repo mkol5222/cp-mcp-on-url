@@ -14,6 +14,7 @@
 		not header Authorization *
 		not path /oauth2/*
 		not path /oauth/*
+		not path /authorize
 		not path /.well-known/*
 		not path /quantum/mcp /logs/mcp
 		not header_regexp Cookie _oauth2_proxy
@@ -61,7 +62,21 @@
 	# Clients that follow authorization_servers → oauth-authorization-server will find DCR here.
 	handle /.well-known/oauth-authorization-server {
 		header Content-Type "application/json"
-		respond `{"issuer":"{env.MCP_BASE_URL}","authorization_endpoint":"{env.POCKET_ID_URL}/authorize","token_endpoint":"{env.POCKET_ID_URL}/api/oidc/token","jwks_uri":"{env.POCKET_ID_URL}/.well-known/jwks.json","userinfo_endpoint":"{env.POCKET_ID_URL}/api/oidc/userinfo","registration_endpoint":"{env.MCP_BASE_URL}/oauth/register","response_types_supported":["code"],"grant_types_supported":["authorization_code"],"code_challenge_methods_supported":["S256"],"token_endpoint_auth_methods_supported":["none","client_secret_basic","client_secret_post"]}` 200
+		respond `{"issuer":"{env.MCP_BASE_URL}","authorization_endpoint":"{env.MCP_BASE_URL}/authorize","token_endpoint":"{env.POCKET_ID_URL}/api/oidc/token","jwks_uri":"{env.POCKET_ID_URL}/.well-known/jwks.json","userinfo_endpoint":"{env.POCKET_ID_URL}/api/oidc/userinfo","registration_endpoint":"{env.MCP_BASE_URL}/oauth/register","response_types_supported":["code"],"grant_types_supported":["authorization_code"],"code_challenge_methods_supported":["S256"],"token_endpoint_auth_methods_supported":["none","client_secret_basic","client_secret_post"]}` 200
+	}
+
+	# Pocket ID does not support RFC 8707 resource indicators — its SPA crashes on the
+	# ?resource=... param sent by VS Code, ChatGPT, and other MCP clients.
+	# Strip it here and redirect the browser to Pocket ID's own /authorize.
+	handle /authorize {
+		map {http.request.uri.query} {clean_query} {
+			~^resource=[^&]*$            ""
+			~^resource=[^&]*&(.+)$       $1
+			~^(.+)&resource=[^&]*$       $1
+			~^(.+)&resource=[^&]*&(.+)$  $1&$2
+			default {http.request.uri.query}
+		}
+		redir {env.POCKET_ID_URL}/authorize?{clean_query} 302
 	}
 
 	# RFC 7591: Dynamic Client Registration.
